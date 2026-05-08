@@ -354,7 +354,7 @@ function hasKnownAudioSignature(bytes) {
   return false;
 }
 
-function updateDriveImportButton(isLoading) {
+function setDriveImportLoading(isLoading) {
   btnDriveImport.disabled = isLoading;
   if (driveUrlInput) driveUrlInput.disabled = isLoading;
   btnDriveImport.textContent = isLoading ? '取込中...' : 'Drive取込';
@@ -368,7 +368,7 @@ async function importFromGoogleDrive(rawUrl) {
   }
 
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
-  updateDriveImportButton(true);
+  setDriveImportLoading(true);
 
   try {
     const res = await fetch(downloadUrl);
@@ -411,7 +411,7 @@ async function importFromGoogleDrive(rawUrl) {
       showToast('Google Driveからの取り込みに失敗しました（URL/公開設定/通信を確認してください）');
     }
   } finally {
-    updateDriveImportButton(false);
+    setDriveImportLoading(false);
   }
 }
 
@@ -942,7 +942,7 @@ fileInput.addEventListener('change', e => {
   fileInput.value = '';
 });
 
-async function submitDriveImport() {
+async function handleDriveImportSubmit() {
   const url = (driveUrlInput?.value || '').trim();
   if (!url) {
     showToast('Google Driveの共有URLを入力してください');
@@ -952,11 +952,11 @@ async function submitDriveImport() {
   await importFromGoogleDrive(url);
 }
 
-btnDriveImport.addEventListener('click', submitDriveImport);
+btnDriveImport.addEventListener('click', handleDriveImportSubmit);
 driveUrlInput?.addEventListener('keydown', e => {
   if (e.code !== 'Enter' && e.key !== 'Enter') return;
   e.preventDefault();
-  submitDriveImport();
+  handleDriveImportSubmit();
 });
 
 uploadArea.addEventListener('dragover', e => {
