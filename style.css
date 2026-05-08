@@ -90,6 +90,11 @@ html, body {
   color: var(--text);
 }
 .upload-icon { font-size: 1.8rem; line-height: 1; }
+.drive-import-btn {
+  margin: 0 12px 12px;
+  width: calc(100% - 24px);
+  flex-shrink: 0;
+}
 
 /* Playlist */
 .playlist {

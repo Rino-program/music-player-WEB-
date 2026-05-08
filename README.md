@@ -11,6 +11,7 @@ A high-quality, feature-rich music player that runs entirely in your browser —
 |------|------|
 | 🎵 マルチファイル再生 | MP3 / AAC / FLAC / OGG / WAV など主要な音声フォーマットに対応 |
 | 📋 プレイリスト管理 | 複数ファイルをドラッグ&ドロップで追加・削除・並べ替え |
+| ☁️ Google Drive インポート | 共有URL（公開ファイル）から直接取り込み |
 | 🔀 シャッフル | ランダム再生（履歴ありの戻る機能付き） |
 | 🔁 リピート | オフ / 全曲リピート / 1曲リピートを切り替え |
 | ⏩ 再生速度 | 0.5× 〜 2× の 6 段階 |
@@ -30,6 +31,14 @@ A high-quality, feature-rich music player that runs entirely in your browser —
 2. 左上の ☰ ボタンでプレイリストを開く
 3. 「＋ ファイルを追加」または画面にドラッグ&ドロップで音楽ファイルを追加
 4. 曲をクリック、または ▶ ボタンで再生開始
+
+### Google Drive からインポート
+
+1. サイドバーの **Google Driveからインポート** をクリック  
+2. Google Drive の共有URLを貼り付け  
+3. 公開設定された音声ファイルを直接プレイリストへ追加
+
+> Google Drive 側の共有設定が「リンクを知っている全員」に公開されている必要があります。
 
 > **Note**: ローカルファイルを直接開く場合は、ブラウザのセキュリティ制限により  
 > Web Audio API が動作しないことがあります。その場合は簡易 HTTP サーバーを使ってください。

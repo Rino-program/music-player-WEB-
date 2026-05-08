@@ -62,6 +62,7 @@ const openBtn      = $('#openSidebar');
 const closeBtn     = $('#closeSidebar');
 const uploadArea   = $('#uploadArea');
 const fileInput    = $('#fileInput');
+const btnDriveImport = $('#btnDriveImport');
 const playlist     = $('#playlist');
 const vizWrap      = $('#vizWrap');
 const canvas       = $('#visualizer');
@@ -276,6 +277,94 @@ async function loadFiles(files) {
     selectTrack(0);
   }
   showToast(`${added.length}曲追加しました`);
+}
+
+function extractGoogleDriveFileId(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (!/^(drive|docs)\.google\.com$/i.test(url.hostname)) return null;
+
+    const idFromQuery = url.searchParams.get('id');
+    if (idFromQuery) return idFromQuery;
+
+    const fileMatch = url.pathname.match(/\/file\/d\/([^/]+)/);
+    if (fileMatch) return fileMatch[1];
+
+    const dMatch = url.pathname.match(/\/d\/([^/]+)/);
+    if (dMatch) return dMatch[1];
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function pickAudioExtension(mimeType) {
+  const map = {
+    'audio/mpeg': '.mp3',
+    'audio/mp3': '.mp3',
+    'audio/wav': '.wav',
+    'audio/x-wav': '.wav',
+    'audio/ogg': '.ogg',
+    'audio/flac': '.flac',
+    'audio/aac': '.aac',
+    'audio/mp4': '.m4a',
+    'audio/x-m4a': '.m4a',
+  };
+  return map[mimeType?.toLowerCase()] || '';
+}
+
+function extractFileNameFromContentDisposition(header) {
+  if (!header) return '';
+  const utf8 = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8) return decodeURIComponent(utf8[1].replace(/["']/g, ''));
+  const plain = header.match(/filename="?([^";]+)"?/i);
+  return plain ? plain[1].trim() : '';
+}
+
+function isAudioByName(name) {
+  return /\.(mp3|wav|ogg|flac|aac|m4a|opus|webm)$/i.test(name || '');
+}
+
+async function importFromGoogleDrive(rawUrl) {
+  const fileId = extractGoogleDriveFileId(rawUrl);
+  if (!fileId) {
+    showToast('Google Driveの共有URLを入力してください');
+    return;
+  }
+
+  const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+  btnDriveImport.disabled = true;
+  btnDriveImport.textContent = 'インポート中...';
+
+  try {
+    const res = await fetch(downloadUrl);
+    if (!res.ok) throw new Error('download failed');
+
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    const contentDisposition = res.headers.get('content-disposition') || '';
+    const headerFileName = extractFileNameFromContentDisposition(contentDisposition);
+    const fallbackName = `google-drive-${fileId}${pickAudioExtension(contentType) || '.mp3'}`;
+    const fileName = headerFileName || fallbackName;
+
+    const blob = await res.blob();
+    const looksAudio = contentType.startsWith('audio/') || isAudioByName(fileName);
+    if (!looksAudio) {
+      throw new Error('not audio');
+    }
+
+    const file = new File([blob], fileName, {
+      type: blob.type || contentType || 'audio/mpeg',
+    });
+    initAudioContext();
+    await loadFiles([file]);
+    openSidebar();
+  } catch {
+    showToast('Google Driveからの取り込みに失敗しました（公開設定を確認してください）');
+  } finally {
+    btnDriveImport.disabled = false;
+    btnDriveImport.textContent = 'Google Driveからインポート';
+  }
 }
 
 /* Minimal ID3v2 / metadata reader using FileReader */
@@ -791,6 +880,12 @@ fileInput.addEventListener('change', e => {
   initAudioContext();
   loadFiles(e.target.files);
   fileInput.value = '';
+});
+
+btnDriveImport.addEventListener('click', async () => {
+  const url = window.prompt('Google Driveの共有URLを貼り付けてください（公開ファイルのみ対応）');
+  if (!url) return;
+  await importFromGoogleDrive(url.trim());
 });
 
 uploadArea.addEventListener('dragover', e => {
