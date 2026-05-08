@@ -90,10 +90,29 @@ html, body {
   color: var(--text);
 }
 .upload-icon { font-size: 1.8rem; line-height: 1; }
-.drive-import-btn {
+.drive-import-wrap {
+  display: flex;
+  gap: 8px;
   margin: 0 12px 12px;
-  width: calc(100% - 24px);
   flex-shrink: 0;
+}
+.drive-url-input {
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  outline: none;
+}
+.drive-url-input::placeholder { color: var(--text-muted); }
+.drive-url-input:focus { border-color: var(--accent); }
+.drive-import-btn {
+  margin-top: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Playlist */

@@ -62,6 +62,7 @@ const openBtn      = $('#openSidebar');
 const closeBtn     = $('#closeSidebar');
 const uploadArea   = $('#uploadArea');
 const fileInput    = $('#fileInput');
+const driveUrlInput = $('#driveUrlInput');
 const btnDriveImport = $('#btnDriveImport');
 const playlist     = $('#playlist');
 const vizWrap      = $('#vizWrap');
@@ -256,7 +257,7 @@ function resizeCanvas() {
 async function loadFiles(files) {
   const added = [];
   for (const file of files) {
-    if (!file.type.startsWith('audio/')) continue;
+    if (!isAudioFile(file)) continue;
     const url = URL.createObjectURL(file);
     const meta = await readMeta(file);
     const track = {
@@ -271,7 +272,10 @@ async function loadFiles(files) {
     state.tracks.push(track);
     added.push(track);
   }
-  if (added.length === 0) return;
+  if (added.length === 0) {
+    showToast('取り込み可能な音声ファイルがありません');
+    return;
+  }
   renderPlaylist();
   if (state.current === -1) {
     selectTrack(0);
@@ -326,6 +330,16 @@ function isAudioByName(name) {
   return /\.(mp3|wav|ogg|flac|aac|m4a|opus|webm)$/i.test(name || '');
 }
 
+function isAudioFile(file) {
+  return file.type.startsWith('audio/') || isAudioByName(file.name);
+}
+
+function updateDriveImportButton(isLoading) {
+  btnDriveImport.disabled = isLoading;
+  if (driveUrlInput) driveUrlInput.disabled = isLoading;
+  btnDriveImport.textContent = isLoading ? '取込中...' : 'Drive取込';
+}
+
 async function importFromGoogleDrive(rawUrl) {
   const fileId = extractGoogleDriveFileId(rawUrl);
   if (!fileId) {
@@ -334,8 +348,7 @@ async function importFromGoogleDrive(rawUrl) {
   }
 
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
-  btnDriveImport.disabled = true;
-  btnDriveImport.textContent = 'インポート中...';
+  updateDriveImportButton(true);
 
   try {
     const res = await fetch(downloadUrl);
@@ -348,7 +361,7 @@ async function importFromGoogleDrive(rawUrl) {
     const fileName = headerFileName || `google-drive-${fileId}${fallbackExt}`;
 
     const blob = await res.blob();
-    const looksAudio = contentType.startsWith('audio/') || (headerFileName && isAudioByName(headerFileName));
+    const looksAudio = contentType.startsWith('audio/') || blob.type.startsWith('audio/') || isAudioByName(fileName);
     if (!looksAudio) {
       throw new Error(`unsupported non-audio file (${contentType || 'unknown'})`);
     }
@@ -359,6 +372,7 @@ async function importFromGoogleDrive(rawUrl) {
     initAudioContext();
     await loadFiles([file]);
     openSidebar();
+    if (driveUrlInput) driveUrlInput.value = '';
   } catch (error) {
     console.error('Google Drive import failed:', error);
     const msg = String(error?.message || '');
@@ -374,8 +388,7 @@ async function importFromGoogleDrive(rawUrl) {
       showToast('Google Driveからの取り込みに失敗しました（URL/公開設定/通信を確認してください）');
     }
   } finally {
-    btnDriveImport.disabled = false;
-    btnDriveImport.textContent = 'Google Driveからインポート';
+    updateDriveImportButton(false);
   }
 }
 
@@ -545,8 +558,9 @@ function updatePlaylistActive() {
 }
 
 function removeTrack(index) {
-  const url = state.tracks[index].url;
-  URL.revokeObjectURL(url);
+  const track = state.tracks[index];
+  if (!track) return;
+  cleanupTrackResources(track);
   state.tracks.splice(index, 1);
 
   if (state.current === index) {
@@ -561,6 +575,15 @@ function removeTrack(index) {
     state.current--;
   }
   renderPlaylist();
+}
+
+function cleanupTrackResources(track) {
+  if (track.url && track.url.startsWith('blob:')) {
+    URL.revokeObjectURL(track.url);
+  }
+  if (track.art && track.art.startsWith('blob:')) {
+    URL.revokeObjectURL(track.art);
+  }
 }
 
 /* ─── Track selection ─────────────────────────────────────── */
@@ -894,10 +917,21 @@ fileInput.addEventListener('change', e => {
   fileInput.value = '';
 });
 
-btnDriveImport.addEventListener('click', async () => {
-  const url = window.prompt('Google Driveの共有URLを貼り付けてください（公開ファイルのみ対応）');
-  if (!url) return;
-  await importFromGoogleDrive(url.trim());
+async function submitDriveImport() {
+  const url = (driveUrlInput?.value || '').trim();
+  if (!url) {
+    showToast('Google Driveの共有URLを入力してください');
+    driveUrlInput?.focus();
+    return;
+  }
+  await importFromGoogleDrive(url);
+}
+
+btnDriveImport.addEventListener('click', submitDriveImport);
+driveUrlInput?.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  submitDriveImport();
 });
 
 uploadArea.addEventListener('dragover', e => {

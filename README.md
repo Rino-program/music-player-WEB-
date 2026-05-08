@@ -34,8 +34,8 @@ A high-quality, feature-rich music player that runs entirely in your browser —
 
 ### Google Drive からインポート
 
-1. サイドバーの **Google Driveからインポート** をクリック  
-2. Google Drive の共有URLを貼り付け  
+1. サイドバーの URL 欄に Google Drive の共有URLを貼り付け  
+2. **Drive取込** をクリック（または Enter キー）  
 3. 公開設定された音声ファイルを直接プレイリストへ追加
 
 > Google Drive 側の共有設定が「リンクを知っている全員」に公開されている必要があります。
