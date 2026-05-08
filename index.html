@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎵 Music Player</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ─── Sidebar / Playlist ────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>🎵 Playlist</h2>
+        <button class="btn-icon" id="closeSidebar" title="Close">✕</button>
+      </div>
+
+      <label class="upload-area" id="uploadArea">
+        <span class="upload-icon">＋</span>
+        <span>ファイルを追加 / Drop files here</span>
+        <input type="file" id="fileInput" accept="audio/*" multiple hidden />
+      </label>
+      <div class="drive-import-wrap">
+        <input
+          type="url"
+          id="driveUrlInput"
+          class="drive-url-input"
+          placeholder="Google Drive共有URL"
+          inputmode="url"
+          spellcheck="false"
+        />
+        <button class="btn-flat drive-import-btn" id="btnDriveImport">Drive取込</button>
+      </div>
+
+      <ul class="playlist" id="playlist"></ul>
+    </aside>
+
+    <!-- ─── Main Player ───────────────────────────────────────── -->
+    <main class="player">
+
+      <!-- Top bar -->
+      <header class="topbar">
+        <button class="btn-icon" id="openSidebar" title="Playlist">☰</button>
+        <span class="app-title">Music Player</span>
+        <button class="btn-icon" id="toggleEq" title="Visualizer">📊</button>
+      </header>
+
+      <!-- Visualizer canvas -->
+      <section class="visualizer-wrap" id="vizWrap">
+        <canvas id="visualizer"></canvas>
+      </section>
+
+      <!-- Album art -->
+      <div class="artwork-wrap">
+        <div class="artwork" id="artwork">
+          <div class="artwork-placeholder">🎵</div>
+          <img id="artworkImg" src="" alt="Album Art" hidden />
+        </div>
+        <div class="spinning-ring"></div>
+      </div>
+
+      <!-- Track info -->
+      <div class="track-info">
+        <div class="track-title marquee-wrap">
+          <span class="marquee" id="trackTitle">曲を選んでください</span>
+        </div>
+        <div class="track-artist" id="trackArtist">—</div>
+        <div class="track-album" id="trackAlbum"></div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-section">
+        <span class="time" id="currentTime">0:00</span>
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-thumb" id="progressThumb"></div>
+        </div>
+        <span class="time" id="totalTime">0:00</span>
+      </div>
+
+      <!-- Main controls -->
+      <div class="controls">
+        <button class="btn-icon ctrl" id="btnShuffle" title="Shuffle (S)">🔀</button>
+        <button class="btn-icon ctrl" id="btnPrev" title="Previous (←)">⏮</button>
+        <button class="btn-icon ctrl play-btn" id="btnPlay" title="Play/Pause (Space)">▶</button>
+        <button class="btn-icon ctrl" id="btnNext" title="Next (→)">⏭</button>
+        <button class="btn-icon ctrl" id="btnRepeat" title="Repeat (R)">🔁</button>
+      </div>
+
+      <!-- Volume & extras -->
+      <div class="extras">
+        <div class="volume-group">
+          <button class="btn-icon" id="btnMute" title="Mute (M)">🔊</button>
+          <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="1" />
+        </div>
+        <div class="speed-group">
+          <label class="extra-label">速度</label>
+          <select id="speedSelect">
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2">2×</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Equalizer sliders -->
+      <section class="eq-section" id="eqSection">
+        <h3 class="eq-title">イコライザー</h3>
+        <div class="eq-bands" id="eqBands">
+          <!-- Bands injected by JS -->
+        </div>
+        <button class="btn-flat" id="btnEqReset">リセット</button>
+      </section>
+
+      <!-- Keyboard shortcuts hint -->
+      <div class="shortcuts-hint">
+        Space: 再生/停止 ・ ← →: 曲送り ・ ↑ ↓: 音量 ・ M: ミュート ・ S: シャッフル ・ R: リピート
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
