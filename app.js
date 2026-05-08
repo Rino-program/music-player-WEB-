@@ -339,7 +339,7 @@ async function importFromGoogleDrive(rawUrl) {
 
   try {
     const res = await fetch(downloadUrl);
-    if (!res.ok) throw new Error('download failed');
+    if (!res.ok) throw new Error(`download failed (${res.status})`);
 
     const contentType = (res.headers.get('content-type') || '').toLowerCase();
     const contentDisposition = res.headers.get('content-disposition') || '';
@@ -350,7 +350,7 @@ async function importFromGoogleDrive(rawUrl) {
     const blob = await res.blob();
     const looksAudio = contentType.startsWith('audio/') || isAudioByName(fileName);
     if (!looksAudio) {
-      throw new Error('not audio');
+      throw new Error('unsupported non-audio file');
     }
 
     const file = new File([blob], fileName, {
@@ -359,7 +359,8 @@ async function importFromGoogleDrive(rawUrl) {
     initAudioContext();
     await loadFiles([file]);
     openSidebar();
-  } catch {
+  } catch (error) {
+    console.error('Google Drive import failed:', error);
     showToast('Google Driveからの取り込みに失敗しました（公開設定を確認してください）');
   } finally {
     btnDriveImport.disabled = false;
