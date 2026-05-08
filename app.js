@@ -334,7 +334,7 @@ function isAudioFile(file) {
   const mimeType = (file.type || '').toLowerCase();
   if (mimeType.startsWith('audio/')) return true;
   if (!isAudioByName(file.name)) return false;
-  return mimeType === '' || mimeType === 'application/octet-stream' || mimeType === 'binary/octet-stream';
+  return mimeType === '' || mimeType === 'application/octet-stream';
 }
 
 function hasKnownAudioSignature(bytes) {
@@ -602,9 +602,11 @@ function removeTrack(index) {
 function cleanupTrackResources(track) {
   if (track.url && track.url.startsWith('blob:')) {
     URL.revokeObjectURL(track.url);
+    track.url = '';
   }
   if (track.art && track.art.startsWith('blob:')) {
     URL.revokeObjectURL(track.art);
+    track.art = null;
   }
 }
 
@@ -951,7 +953,7 @@ async function submitDriveImport() {
 
 btnDriveImport.addEventListener('click', submitDriveImport);
 driveUrlInput?.addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
+  if (e.code !== 'Enter' && e.key !== 'Enter') return;
   e.preventDefault();
   submitDriveImport();
 });
