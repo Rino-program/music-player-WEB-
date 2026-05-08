@@ -286,7 +286,7 @@ async function loadFiles(files) {
 function extractGoogleDriveFileId(rawUrl) {
   try {
     const url = new URL(rawUrl);
-    if (!/^(drive|docs)\.google\.com$/i.test(url.hostname)) return null;
+    if (!/^(www\.)?(drive|docs)\.google\.com$/i.test(url.hostname)) return null;
 
     const idFromQuery = url.searchParams.get('id');
     if (idFromQuery) return idFromQuery;
@@ -339,8 +339,9 @@ function isAudioFile(file) {
 
 function hasKnownAudioSignature(bytes) {
   if (bytes.length < 4) return false;
+  const id3 = bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33;
   const text = String.fromCharCode(...bytes.slice(0, 4));
-  if (text === 'ID3' || text === 'fLaC' || text === 'OggS') return true;
+  if (id3 || text === 'fLaC' || text === 'OggS') return true;
   if (text === 'RIFF' && bytes.length >= 12) {
     const wave = String.fromCharCode(...bytes.slice(8, 12));
     if (wave === 'WAVE') return true;
