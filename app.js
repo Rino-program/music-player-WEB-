@@ -329,7 +329,7 @@ function isAudioByName(name) {
 async function importFromGoogleDrive(rawUrl) {
   const fileId = extractGoogleDriveFileId(rawUrl);
   if (!fileId) {
-    showToast('Google Driveの共有URLを入力してください');
+    showToast('drive.google.com / docs.google.com の共有URLを入力してください');
     return;
   }
 
@@ -350,7 +350,7 @@ async function importFromGoogleDrive(rawUrl) {
     const blob = await res.blob();
     const looksAudio = contentType.startsWith('audio/') || (headerFileName && isAudioByName(headerFileName));
     if (!looksAudio) {
-      throw new Error('unsupported non-audio file');
+      throw new Error(`unsupported non-audio file (${contentType || 'unknown'})`);
     }
 
     const file = new File([blob], fileName, {
@@ -364,6 +364,12 @@ async function importFromGoogleDrive(rawUrl) {
     const msg = String(error?.message || '');
     if (msg.includes('unsupported non-audio file')) {
       showToast('音声ファイルのみ取り込みできます');
+    } else if (msg.includes('download failed (403)')) {
+      showToast('Google Driveの共有設定を確認してください（403）');
+    } else if (msg.includes('download failed (404)')) {
+      showToast('ファイルが見つかりません（404）');
+    } else if (msg.includes('Failed to fetch')) {
+      showToast('通信エラーが発生しました。ネットワークを確認してください');
     } else {
       showToast('Google Driveからの取り込みに失敗しました（URL/公開設定/通信を確認してください）');
     }
