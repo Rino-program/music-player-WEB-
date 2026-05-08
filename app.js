@@ -331,7 +331,26 @@ function isAudioByName(name) {
 }
 
 function isAudioFile(file) {
-  return file.type.startsWith('audio/') || isAudioByName(file.name);
+  const mimeType = (file.type || '').toLowerCase();
+  if (mimeType.startsWith('audio/')) return true;
+  if (!isAudioByName(file.name)) return false;
+  return mimeType === '' || mimeType === 'application/octet-stream' || mimeType === 'binary/octet-stream';
+}
+
+function hasKnownAudioSignature(bytes) {
+  if (bytes.length < 4) return false;
+  const text = String.fromCharCode(...bytes.slice(0, 4));
+  if (text === 'ID3' || text === 'fLaC' || text === 'OggS') return true;
+  if (text === 'RIFF' && bytes.length >= 12) {
+    const wave = String.fromCharCode(...bytes.slice(8, 12));
+    if (wave === 'WAVE') return true;
+  }
+  if (bytes[0] === 0xff && (bytes[1] & 0xf0) === 0xf0) return true;
+  if (bytes.length >= 12) {
+    const ftyp = String.fromCharCode(...bytes.slice(4, 8));
+    if (ftyp === 'ftyp') return true;
+  }
+  return false;
 }
 
 function updateDriveImportButton(isLoading) {
@@ -361,7 +380,10 @@ async function importFromGoogleDrive(rawUrl) {
     const fileName = headerFileName || `google-drive-${fileId}${fallbackExt}`;
 
     const blob = await res.blob();
-    const looksAudio = contentType.startsWith('audio/') || blob.type.startsWith('audio/') || isAudioByName(fileName);
+    const headBytes = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+    const looksAudio = contentType.startsWith('audio/') ||
+      blob.type.startsWith('audio/') ||
+      (isAudioByName(fileName) && hasKnownAudioSignature(headBytes));
     if (!looksAudio) {
       throw new Error(`unsupported non-audio file (${contentType || 'unknown'})`);
     }
