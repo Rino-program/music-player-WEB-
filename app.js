@@ -443,8 +443,13 @@ function parseID3(bytes) {
   /* Extended header */
   let pos = 10;
   if (flags & 0x40) {
-    const extSize = version === 4 ? syncsafe(bytes, pos) : readUint32(bytes, pos);
-    pos += extSize;
+    if (version === 4) {
+      const extSize = syncsafe(bytes, pos);
+      pos += 4 + extSize;
+    } else {
+      const extSize = readUint32(bytes, pos);
+      pos += extSize;
+    }
   }
 
   const end = 10 + size;
