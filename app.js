@@ -344,11 +344,11 @@ async function importFromGoogleDrive(rawUrl) {
     const contentType = (res.headers.get('content-type') || '').toLowerCase();
     const contentDisposition = res.headers.get('content-disposition') || '';
     const headerFileName = extractFileNameFromContentDisposition(contentDisposition);
-    const fallbackName = `google-drive-${fileId}${pickAudioExtension(contentType) || '.mp3'}`;
-    const fileName = headerFileName || fallbackName;
+    const fallbackExt = pickAudioExtension(contentType);
+    const fileName = headerFileName || `google-drive-${fileId}${fallbackExt}`;
 
     const blob = await res.blob();
-    const looksAudio = contentType.startsWith('audio/') || isAudioByName(fileName);
+    const looksAudio = contentType.startsWith('audio/') || (headerFileName && isAudioByName(headerFileName));
     if (!looksAudio) {
       throw new Error('unsupported non-audio file');
     }
@@ -361,7 +361,12 @@ async function importFromGoogleDrive(rawUrl) {
     openSidebar();
   } catch (error) {
     console.error('Google Drive import failed:', error);
-    showToast('Google Driveからの取り込みに失敗しました（公開設定を確認してください）');
+    const msg = String(error?.message || '');
+    if (msg.includes('unsupported non-audio file')) {
+      showToast('音声ファイルのみ取り込みできます');
+    } else {
+      showToast('Google Driveからの取り込みに失敗しました（URL/公開設定/通信を確認してください）');
+    }
   } finally {
     btnDriveImport.disabled = false;
     btnDriveImport.textContent = 'Google Driveからインポート';
